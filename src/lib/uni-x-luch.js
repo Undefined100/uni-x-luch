@@ -170,6 +170,13 @@ let api = {
     // 注册配置类接口
     const registerMethod = apiConfig => {
       apiConfig.forEach(methodConfig => {
+        if (!methodConfig) {
+          console.warn(
+            `%c 接口注册有误，获取到的接口配置为undefined，请调整！`,
+            'font-size:2em'
+          )
+          return false
+        }
         const {
           url,
           data,
