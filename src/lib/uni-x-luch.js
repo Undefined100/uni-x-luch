@@ -53,7 +53,7 @@ let api = {
     } = {}
   ) => {
     let $api
-    globalOption = Object.assign({}, defaultOption, globalOption)
+    globalOption = Object.assign({}, defaultOption, globalOption, { header: globalOption.headers })
     const http = new Request(globalOption)
 
     // http请求拦截器
