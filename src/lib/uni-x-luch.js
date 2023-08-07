@@ -128,12 +128,12 @@ let api = {
 
     // 发送请求
     const ajax = options => {
-      options = Object.assign({}, options, {
+      options = Object.assign({}, {
         name: options['name'] || Math.random().toString(),
         getTask: task => {
           $api.cancelStack[options.name] = task
         }
-      })
+      }, options, { method: (options.method || 'GET').toUpperCase() })
 
       /* eslint-disable */
       const { custom, ...otherConfig } = options
@@ -239,7 +239,7 @@ let api = {
           })
         }
         $api[method] = options => {
-          options && options.type && (options.method = options.type)
+          options?.type && (options.method = options.type)
           options = Object.assign(
             {},
             {
