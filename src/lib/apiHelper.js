@@ -7,7 +7,7 @@ const apiHelper = {
    * @param  {[type]} options.config      json配置对象或者线上文件完整url地址
    * @return {[Object]}                  [系统配置对象]
    */
-  async register({
+  register({
     systemConfig,
     requestIntercept,
     responseSuccIntercept,
