@@ -196,7 +196,7 @@ let api = {
           return false
         }
         if ($api[methodConfig.method]) {
-          console.warn(
+          console.error(
             `%c 存在重名的接口方法(method: ${method})，请调整！`,
             'font-size:2em'
           )
