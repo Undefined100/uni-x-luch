@@ -171,10 +171,8 @@ let api = {
     const registerMethod = apiConfig => {
       apiConfig.forEach(methodConfig => {
         if (!methodConfig) {
-          console.warn(
-            `%c 接口注册有误，获取到的接口配置为undefined，请调整！`,
-            'font-size:2em'
-          )
+          console.group('%c 接口注册有误，获取到的接口配置为undefined，请调整！', 'font-size: 2em; color: #ffcd4d;')
+          console.groupEnd()
           return false
         }
         const {
@@ -189,17 +187,13 @@ let api = {
           ...rest
         } = methodConfig
         if (!method) {
-          console.warn(
-            `%c url: ${url}的接口注册未填写method属性，请调整！`,
-            'font-size:2em'
-          )
+          console.group(`%c url: ${url}的接口注册未填写method属性，请调整！`, 'font-size: 2em; color: #ffcd4d;')
+          console.groupEnd()
           return false
         }
         if ($api[methodConfig.method]) {
-          console.error(
-            `%c 存在重名的接口方法(method: ${method})，请调整！`,
-            'font-size:2em'
-          )
+          console.group(`%c 存在重名的接口方法(method: ${method})，请调整！`, 'font-size: 2em; color: #ffcd4d;')
+          console.groupEnd()
           return false
         }
         if (process.env.NODE_ENV === 'development') {
@@ -210,7 +204,8 @@ let api = {
             item => item.signature === signature
           )
           if (tempSignature) {
-            console.warn('%c 存在重复的接口，请调整！', 'font-size:2em')
+            console.group('%c 存在重复的接口，请调整！', 'font-size: 2em; color: #ffcd4d;')
+            console.groupEnd()
             console.table([
               {
                 name,

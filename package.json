@@ -1,7 +1,7 @@
 {
   "name": "uni-x-luch",
   "description": "基于luch-request扩展的uniapp异步请求插件，为前端实现API统一管理的解决方案。",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "author": "undefined100 <946424684@qq.com>",
   "license": "MIT",
   "private": false,
