@@ -1,8 +1,22 @@
-import Request from "luch-request";
+import Request from 'luch-request'
 
-let cachePool = {}; // 缓存池
+let cachePool = {} // 缓存池
 // let CACHE_TIME = 60000 // 缓存时间，单位ms
-let apiSignature = []; // 接口签名，用于判断重复接口
+let apiSignature = [] // 接口签名，用于判断重复接口
+
+// 私有方法列表
+const privateMethods = [
+  'registerMethod',
+  'cancelStack',
+  'cancel',
+  'clearCache',
+  'request',
+  'get',
+  'delete',
+  'post',
+  'put',
+  'all'
+]
 
 const defaultOption = {
   // baseURL: '',
@@ -38,7 +52,7 @@ const defaultOption = {
   // validateStatus: (statusCode) => { // statusCode 必存在。此处示例为全局默认配置
   //     return statusCode >= 200 && statusCode < 300
   // }
-};
+}
 
 let api = {
   install: (
@@ -49,18 +63,18 @@ let api = {
       globalOption,
       requestIntercept,
       responseSuccIntercept,
-      responseErrorIntercept,
+      responseErrorIntercept
     } = {}
   ) => {
-    let $api;
+    let $api
     globalOption = Object.assign({}, defaultOption, globalOption, {
-      header: globalOption.headers,
-    });
-    const http = new Request(globalOption);
+      header: globalOption.headers
+    })
+    const http = new Request(globalOption)
 
     // http请求拦截器
     http.interceptors.request.use(
-      (config) =>
+      config =>
         // const {
         //   url,
         //   method,
@@ -88,23 +102,23 @@ let api = {
         //   }
         // }
         requestIntercept ? requestIntercept(config) : config,
-      (err) => Promise.reject(err)
-    );
+      err => Promise.reject(err)
+    )
 
     // http响应拦截器
     http.interceptors.response.use(
-      (resp) => {
+      resp => {
         // if (resp.status && resp.config && resp.headers && resp.request) {
         // 来自接口的响应
         const {
-          name,
+          name
           // cache,
           // url,
           // method,
           // params,
           // data
-        } = resp.config;
-        delete $api.cancelStack[name];
+        } = resp.config
+        delete $api.cancelStack[name]
         // if (cache) {
         //   // 缓存数据 并将当前时间存入 方便之后判断是否过期
         //   const cacheData = {
@@ -116,62 +130,62 @@ let api = {
         //   }_${data || ''}`
         //   cachePool[cacheKey] = cacheData
         // }
-        return responseSuccIntercept ? responseSuccIntercept(resp) : resp;
+        return responseSuccIntercept ? responseSuccIntercept(resp) : resp
         // } else {
         //   // 来自缓存的响应
         //   return resp
         // }
       },
-      (err) =>
+      err =>
         responseErrorIntercept
           ? responseErrorIntercept(err)
           : Promise.reject(err)
-    );
+    )
 
     // 发送请求
-    const ajax = (options) => {
+    const ajax = options => {
       options = Object.assign(
         {},
         {
-          name: options["name"] || Math.random().toString(),
-          getTask: (task) => {
-            $api.cancelStack[options.name] = task;
-          },
+          name: options['name'] || Math.random().toString(),
+          getTask: task => {
+            $api.cancelStack[options.name] = task
+          }
         },
         options,
-        { method: (options.method || "GET").toUpperCase() }
-      );
+        { method: (options.method || 'GET').toUpperCase() }
+      )
 
       /* eslint-disable */
-      const { custom, ...otherConfig } = options;
-      options.custom = otherConfig;
+      const { custom, ...otherConfig } = options
+      options.custom = otherConfig
       return new Promise((resolve, reject) => {
-        http.middleware(options).then(resolve).catch(reject);
-      });
-    };
+        http.middleware(options).then(resolve).catch(reject)
+      })
+    }
     // 并发请求
-    const batchAjax = (requestArray) =>
+    const batchAjax = requestArray =>
       new Promise((resolve, reject) => {
-        Promise.all(requestArray.map((request) => request()))
+        Promise.all(requestArray.map(request => request()))
           .then(resolve)
-          .catch(reject);
-      });
-    const request = (options) =>
-      Array.isArray(options) ? batchAjax(options) : (() => ajax(options))();
+          .catch(reject)
+      })
+    const request = options =>
+      Array.isArray(options) ? batchAjax(options) : (() => ajax(options))()
     const requestWithAliases = (options, method = {}) => {
-      options = Object.assign({}, options, method);
-      return ajax(options);
-    };
-    $api = (options) => request(options);
+      options = Object.assign({}, options, method)
+      return ajax(options)
+    }
+    $api = options => request(options)
     // 注册配置类接口
-    const registerMethod = (apiConfig) => {
-      apiConfig.forEach((methodConfig) => {
+    const registerMethod = apiConfig => {
+      apiConfig.forEach(methodConfig => {
         if (!methodConfig) {
           console.log(
-            "%c 接口注册有误，获取到的接口配置为undefined，请调整！",
-            "font-size: 2em; color: #e54d42;"
-          );
-          return false;
+            '%c 接口注册有误，获取到的接口配置为undefined，请调整！',
+            'font-size: 2em; color: #e54d42;'
+          )
+          return false
         }
         const {
           url,
@@ -183,33 +197,40 @@ let api = {
           cache,
           cacheTime: _cacheTime,
           ...rest
-        } = methodConfig;
+        } = methodConfig
         if (!method) {
           console.log(
             `%c url: ${url}的接口注册未填写method属性，请调整！`,
-            "font-size: 2em; color: #e54d42;"
-          );
-          return false;
+            'font-size: 2em; color: #e54d42;'
+          )
+          return false
         }
-        if ($api[methodConfig.method]) {
+        if (privateMethods.includes(method)) {
+          console.log(
+            `%c 接口方法 ${method}与私有方法名列表[${privateMethods}]中的方法重名，请调整！`,
+            'font-size: 2em; color: #e54d42;'
+          )
+          return false
+        }
+        if ($api[method]) {
           console.log(
             `%c 存在重名的接口方法(method: ${method})，请调整！`,
-            "font-size: 2em; color: #e54d42;"
-          );
-          return false;
+            'font-size: 2em; color: #e54d42;'
+          )
+          return false
         }
-        if (process.env.NODE_ENV === "development") {
+        if (process.env.NODE_ENV === 'development') {
           const signature = `${url}${type}${JSON.stringify(
             data
-          )}${JSON.stringify(params)}${cache}`;
+          )}${JSON.stringify(params)}${cache}`
           const tempSignature = apiSignature.find(
-            (item) => item.signature === signature
-          );
+            item => item.signature === signature
+          )
           if (tempSignature) {
             console.log(
-              "%c 存在重复的接口，请调整！",
-              "font-size: 2em; color: #e54d42;"
-            );
+              '%c 存在重复的接口，请调整！',
+              'font-size: 2em; color: #e54d42;'
+            )
             console.table([
               {
                 name,
@@ -218,7 +239,7 @@ let api = {
                 type,
                 data,
                 params,
-                cache,
+                cache
               },
               {
                 name: tempSignature.name,
@@ -227,110 +248,109 @@ let api = {
                 type,
                 data,
                 params,
-                cache,
-              },
-            ]);
+                cache
+              }
+            ])
           }
           apiSignature.push({
             name,
             method,
-            signature,
-          });
+            signature
+          })
         }
-        $api[method] = (options) => {
-          options?.type && (options.method = options.type);
+        $api[method] = options => {
+          options?.type && (options.method = options.type)
           options = Object.assign(
             {},
             {
               cache,
               cacheTime: _cacheTime,
-              method: type || "GET",
+              method: type || 'GET',
               url,
               data,
               params,
-              ...rest,
+              ...rest
             },
             options
-          );
-          return $api(options);
-        };
+          )
+          return $api(options)
+        }
         // 扩展url路径型参数请求
-        $api[method].restful = (options) => {
-          options && options.type && (options.method = options.type);
+        $api[method].restful = options => {
+          options && options.type && (options.method = options.type)
           options = Object.assign(
             {},
             {
               cache,
               cacheTime: _cacheTime,
-              method: type || "GET",
+              method: type || 'GET',
               url,
               data,
               params,
-              ...rest,
+              ...rest
             },
             options
-          );
-          let unMatchedParams = options.restfulParams; // 路径参数与url参数共存
-          Object.entries(options.params || {}).forEach((entry) => {
-            let val = entry[1];
-            let name = entry[0];
-            var regex = new RegExp(`{${name}}`, "g");
+          )
+          let unMatchedParams = options.restfulParams // 路径参数与url参数共存
+          Object.entries(options.params || {}).forEach(entry => {
+            let val = entry[1]
+            let name = entry[0]
+            var regex = new RegExp(`{${name}}`, 'g')
             if (regex.test(options.url)) {
-              options.url = options.url.replace(regex, `${val}`);
+              options.url = options.url.replace(regex, `${val}`)
             } else {
-              unMatchedParams[name] = val;
+              unMatchedParams[name] = val
             }
-          });
-          options.params = unMatchedParams;
-          return $api(options);
-        };
+          })
+          options.params = unMatchedParams
+          return $api(options)
+        }
         // 清除缓存
         $api[method].clearCache = () => {
-          const cacheKey = `${url}_${type || "GET"}`;
+          const cacheKey = `${url}_${type || 'GET'}`
           Object.keys(cachePool)
-            .filter((key) => key.indexOf(cacheKey) === 0)
-            .forEach((key) => delete cachePool[key]);
-        };
-        $api[methodConfig.method].config = methodConfig;
-      });
-      apiSignature = null;
-    };
-    apiConfig && registerMethod(apiConfig);
-
-    $api.cancelStack = {};
-    $api.cancel = (name) => {
+            .filter(key => key.indexOf(cacheKey) === 0)
+            .forEach(key => delete cachePool[key])
+        }
+        $api[methodConfig.method].config = methodConfig
+      })
+      apiSignature.length = 0
+    }
+    apiConfig && registerMethod(apiConfig)
+    $api.registerMethod = registerMethod
+    $api.cancelStack = {}
+    $api.cancel = name => {
       if (name && !$api.cancelStack[name]) {
-        return;
+        return
       }
       if (name) {
-        $api.cancelStack[name].abort();
+        $api.cancelStack[name].abort()
       } else {
-        Object.values($api.cancelStack).map((c) => c.abort());
+        Object.values($api.cancelStack).map(c => c.abort())
       }
-    };
+    }
     // 初始化缓存时间，默认60s
     // CACHE_TIME = cacheTime || 60000
     // 设置缓存时间(单位ms)
     // $api.setCacheTime = time => CACHE_TIME = time
     // 清空缓存
-    $api.clearCache = () => (cachePool = {});
+    $api.clearCache = () => (cachePool = {})
     // 语义化请求
-    $api.request = (options) => request(options);
-    $api.get = (options) => requestWithAliases(options, { method: "GET" });
-    $api.delete = (options) =>
-      requestWithAliases(options, { method: "DELETE" });
-    $api.post = (options) => requestWithAliases(options, { method: "POST" });
-    $api.put = (options) => requestWithAliases(options, { method: "PUT" });
+    $api.request = options => request(options)
+    $api.get = options => requestWithAliases(options, { method: 'GET' })
+    $api.delete = options => requestWithAliases(options, { method: 'DELETE' })
+    $api.post = options => requestWithAliases(options, { method: 'POST' })
+    $api.put = options => requestWithAliases(options, { method: 'PUT' })
     // $api.postFile = options => requestWithAliases(options, {
     //   method: 'post',
     //   headers: { 'Content-Type': 'multipart/form-data' }
     // })
-    $api.all = (requestArray) => batchAjax(requestArray);
+    $api.all = requestArray => batchAjax(requestArray)
 
     // 添加全局方法
-    Vue.$api = $api;
+    Vue.$api = $api
     // 添加实例方法
-    Vue.prototype.$api = $api;
-  },
-};
-export default api;
+    Vue.prototype.$api = $api
+  }
+}
+export default api
